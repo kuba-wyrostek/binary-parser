@@ -1,9 +1,11 @@
 # binary-parser
-Parse binary data according to provided declarative schema
+**Parse binary data according to provided declarative schema**
+
+The idea behind the library is to provide the developer with a simple tool that allows them do describe the schema of expected output objects and then parse binary data (in NodeJS Buffer) according to the schema. Since the approach is (mostly) declarative - the underlying parsing and validation work is effectively hidden, while the developer gains the high-level view of how the data on the wire is being transformed into possibly nested structures of objects and arrays. The library has been successfully used in a few projects both for self-designed and 3rd party binary protocols.
 
 ## Warning
 
-This repository is a work in progress. Do not use.
+*This repository is a work in progress, published for demonstration purposes. Do not use.*
 
 ## How to use (by examples)
 
@@ -28,7 +30,7 @@ const ImageHeaderSimple_Schema = {
 
 let imageHeaderSimple_RAW = Buffer.from('0164011202', 'hex');
 
-let imageHeaderSimple_LE = BinaryParser.parse(ImageHeaderSimple_Schema, imageHeaderSimple_RAW, true);
+let imageHeaderSimple_LE = BinaryParser.parse(ImageHeaderSimple_Schema, imageHeaderSimple_RAW, true); // <- "true" stands for Little-Endian
 let imageHeaderSimple_BE = BinaryParser.parse(ImageHeaderSimple_Schema, imageHeaderSimple_RAW);
 
 print(imageHeaderSimple_LE);
@@ -112,7 +114,7 @@ const ImageHeaderClass_Schema = {
 			name: 'Metrics',
 			type: 'record',
 			schema: {
-      	class: ImageMetrics,
+			class: ImageMetrics,
 				fields: [
 					{ name: 'Width', type: 'unsigned', byteLength: 2 },
 					{ name: 'Height', type: 'unsigned', byteLength: 2 }
@@ -149,7 +151,7 @@ const ImageHeaderList_Schema = {
 			name: 'Images',
 			type: 'array',
 			hasNextItem: (array, reader) => array.length < array.__parent.ItemCount,
-			// arrays always consist of records (see decoders to get plain values)
+			// arrays always consist of records
 			schema: {
 				fields: [
 					{ name: 'ImageType', type: 'number', byteLength: 1 },
@@ -204,6 +206,7 @@ const ArrayOfNumbers_Schema = {
 			name: 'Payload',
 			type: 'array',
 			hasNextItem: (array, reader) => array.length < array.__parent.Count,
+			// arrays always consist of records (see decoders below on how to get plain values)
 			schema: {
 				fields: [
 					{ name: 'Value', type: 'unsigned', byteLength: (record, reader) => record.__parent.__parent.DataSize }
@@ -475,7 +478,7 @@ try
 }
 catch (error)
 {
-	print(error instanceof BinaryParser.StreamContentError); // -> true
+	print(error instanceof BinaryParser.StreamContentError);
 }
 ```
 
@@ -526,7 +529,7 @@ try
 }
 catch (error)
 {
-	print(error instanceof BinaryParser.StreamContentError); // -> true
+	print(error instanceof BinaryParser.StreamContentError);
 }
 ```
 
