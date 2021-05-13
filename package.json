@@ -1,0 +1,12 @@
+{
+  "name": "binary-parser",
+  "version": "1.0.0",
+  "description": "Parses binary data according to provided schema",
+  "main": "index.js",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10.16.0",
+    "npm": ">= 3.0.0"
+  }
+}
