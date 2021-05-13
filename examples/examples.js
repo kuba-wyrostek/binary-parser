@@ -1,23 +1,16 @@
-# binary-parser
-Parse binary data according to provided declarative schema
+const util = require('util');
 
-## Warning
+const BinaryParser = require('../index.js');
 
-This repository is a work in progress. Do not use.
+function print(result)
+{
+	console.log(util.inspect(result, { depth: null, showHidden: false, compact: false }));
+}
 
-## How to use (by examples)
 
-It is assumed that `BinaryParser` class was imported into the scope:
 
-```javascript
-const BinaryParser = require('./binary-parser');
-```
+// simple numbers
 
-Examples source is available in `examples/examples.js`.
-
-### Parsing simple numbers
-
-```javascript
 const ImageHeaderSimple_Schema = {
 	fields: [
 		{ name: 'ImageType', type: 'number', byteLength: 1 },
@@ -31,30 +24,13 @@ let imageHeaderSimple_RAW = Buffer.from('0164011202', 'hex');
 let imageHeaderSimple_LE = BinaryParser.parse(ImageHeaderSimple_Schema, imageHeaderSimple_RAW, true);
 let imageHeaderSimple_BE = BinaryParser.parse(ImageHeaderSimple_Schema, imageHeaderSimple_RAW);
 
-print(imageHeaderSimple_LE);
-print(imageHeaderSimple_BE);
-```
+print(imageHeaderSimple_LE); // -> { ImageType: 1, Width: 356, Height: 530 }
+print(imageHeaderSimple_BE); // -> { ImageType: 1, Width: 25601, Height: 4610 }
 
-Expected result:
 
-```javascript
-{
-  ImageType: 1,
-  Width: 356,
-  Height: 530
-}
-```
-```javascript
-{
-  ImageType: 1,
-  Width: 25601,
-  Height: 4610
-}
-```
 
-### Nested records of data
+// nested records
 
-```javascript
 const ImageHeaderNested_Schema = {
 	fields: [
 		{ name: 'ImageType', type: 'number', byteLength: 1 },
@@ -77,28 +53,15 @@ let imageHeaderNested = BinaryParser.parse(ImageHeaderNested_Schema, imageHeader
 
 print(imageHeaderNested);
 print(imageHeaderNested.Size.__parent === imageHeaderNested);
-```
 
-Expected result:
 
-```javascript
-{
-  ImageType: 1,
-  Size: {
-    Width: 356,
-    Height: 530
-  }
-}
-```
-```javascript
-true
-```
 
-### Using class in prototype chain of parsed record
+// class in prototype
 
-```javascript
 class ImageMetrics
 {
+	constructor() {}
+
 	get size()
 	{
 		return this.Width * this.Height;
@@ -112,7 +75,7 @@ const ImageHeaderClass_Schema = {
 			name: 'Metrics',
 			type: 'record',
 			schema: {
-      	class: ImageMetrics,
+				class: ImageMetrics,
 				fields: [
 					{ name: 'Width', type: 'unsigned', byteLength: 2 },
 					{ name: 'Height', type: 'unsigned', byteLength: 2 }
@@ -128,20 +91,10 @@ let imageHeaderClass = BinaryParser.parse(ImageHeaderClass_Schema, imageHeaderCl
 
 print(imageHeaderClass.Metrics instanceof ImageMetrics);
 print(imageHeaderClass.Metrics.size);
-```
 
-Expected result:
 
-```javascript
-true
-```
-```javascript
-188680
-```
+// arrays
 
-### Parsing arrays
-
-```javascript
 const ImageHeaderList_Schema = {
 	fields: [
 		{ name: 'ItemCount', type: 'unsigned', byteLength: 1 },
@@ -166,36 +119,11 @@ let imageHeaderList_RAW = Buffer.from('03016401120202640112020364011202', 'hex')
 let imageHeaderList = BinaryParser.parse(ImageHeaderList_Schema, imageHeaderList_RAW, true);
 
 print(imageHeaderList);
-```
 
-Expected result:
 
-```javascript
-{
-  ItemCount: 3,
-  Images: [
-    {
-      ImageType: 1,
-      Width: 356,
-      Height: 530
-    },
-    {
-      ImageType: 2,
-      Width: 356,
-      Height: 530
-    },
-    {
-      ImageType: 3,
-      Width: 356,
-      Height: 530
-    }
-  ]
-}
-```
 
-### Using dynamic schema
+// dynamic schema
 
-```javascript
 const ArrayOfNumbers_Schema = {
 	fields: [
 		{ name: 'Count', type: 'unsigned', byteLength: 2 },
@@ -221,60 +149,11 @@ let arrayOfNumbers_2 = BinaryParser.parse(ArrayOfNumbers_Schema, arrayOfNumbers_
 
 print(arrayOfNumbers_1);
 print(arrayOfNumbers_2);
-```
 
-Expected result:
 
-```javascript
-{
-  Count: 5,
-  DataSize: 1,
-  Payload: [
-    {
-      Value: 1
-    },
-    {
-      Value: 2
-    },
-    {
-      Value: 3
-    },
-    {
-      Value: 4
-    },
-    {
-      Value: 5
-    }
-  ]
-}
-```
-```javascript
-{
-  Count: 5,
-  DataSize: 2,
-  Payload: [
-    {
-      Value: 6
-    },
-    {
-      Value: 7
-    },
-    {
-      Value: 8
-    },
-    {
-      Value: 9
-    },
-    {
-      Value: 10
-    }
-  ]
-}
-```
 
-### Parsing strings and raw buffers
+// strings and buffers
 
-```javascript
 const NamesAndFlags_Schema = {
 	fields: [
 		{ name: 'NameLength', type: 'unsigned', byteLength: 2 },
@@ -289,22 +168,11 @@ let namesAndFlags_RAW = Buffer.from('04006b7562610200ff01', 'hex');
 let namesAndFlags = BinaryParser.parse(NamesAndFlags_Schema, namesAndFlags_RAW, true);
 
 print(namesAndFlags);
-```
 
-Expected result:
 
-```javascript
-{
-  NameLength: 4,
-  Name: 'kuba',
-  FlagsLength: 2,
-  Flags: <Buffer ff 01>
-}
-```
 
-### Ignoring parts of data and skipping fields
+// skip
 
-```javascript
 const VariantFields_Schema = {
 	fields: [
 		{ name: 'HeaderFlag', type: 'unsigned', byteLength: 1 },
@@ -324,30 +192,11 @@ let variantFields_2 = BinaryParser.parse(VariantFields_Schema, variantFields_RAW
 
 print(variantFields_1);
 print(variantFields_2);
-```
 
-Expected result:
 
-```javascript
-{
-  HeaderFlag: 1,
-  DataLength: 4,
-  DataType: 1,
-  Name: 'kuba'
-}
-```
-```javascript
-{
-  HeaderFlag: 1,
-  DataLength: 6,
-  DataType: 2,
-  Mail: 'a@a.pl'
-}
-```
 
-### Read all up to the end of buffer
+// read all that is left
 
-```javascript
 const DataWithHeader_Schema = {
 	fields: [
 		{ name: 'HeaderFlag', type: 'unsigned', byteLength: 1 },
@@ -360,20 +209,11 @@ let dataWithHeader_RAW = Buffer.from('a1006b7562610200ff01', 'hex');
 let dataWithHeader = BinaryParser.parse(DataWithHeader_Schema, dataWithHeader_RAW, true);
 
 print(dataWithHeader);
-```
 
-Expected result:
 
-```javascript
-{
-  HeaderFlag: 161,
-  Payload: <Buffer 00 6b 75 62 61 02 00 ff 01>
-}
-```
 
-### Using decoders (for particular fields and whole record)
+// decoders (single and record)
 
-```javascript
 const DecodedHeader_Schema = {
 	fields: [
 		{ name: 'ImageType', type: 'number', byteLength: 1 },
@@ -397,21 +237,12 @@ let decodedHeader_RAW = Buffer.from('010000017931CC53E801640212', 'hex');
 let decodedHeader = BinaryParser.parse(DecodedHeader_Schema, decodedHeader_RAW, false);
 
 print(decodedHeader);
-```
 
-Expected result:
 
-```javascript
-{
-  ImageType: 1,
-  CreateDate: 2021-05-03T10:35:45.000Z,
-  Size: '356 x 530'
-}
-```
 
-### Using decoders with arrays
 
-```javascript
+// array decoders
+
 const DecodedArray_Schema = {
 	fields: [
 		{ name: 'Count', type: 'unsigned', byteLength: 2 },
@@ -435,26 +266,12 @@ let decodedArray_RAW = Buffer.from('0500010102030405', 'hex');
 let decodedArray = BinaryParser.parse(DecodedArray_Schema, decodedArray_RAW, true);
 
 print(decodedArray);
-```
 
-Expected result:
 
-```javascript
-{
-  Count: 5,
-  Values: [
-    1,
-    1,
-    2,
-    3,
-    4
-  ]
-}
-```
 
-### Using field validators
 
-```javascript
+// field validator
+
 const FieldValidating_Schema = {
 	fields: [
 		{ name: 'HeaderFlag', type: 'unsigned', byteLength: 1 },
@@ -477,24 +294,12 @@ catch (error)
 {
 	print(error instanceof BinaryParser.StreamContentError); // -> true
 }
-```
 
-Expected result:
 
-```javascript
-{
-  HeaderFlag: 1,
-  IMEI: '123159987159987',
-  Payload: <Buffer 00 01 02>
-}
-```
-```javascript
-true
-```
 
-### Using validators and decoders with arrays
 
-```javascript
+// array validator & decoder
+
 const ArrayValidating_Schema = {
 	fields: [
 		{ name: 'Count', type: 'unsigned', byteLength: 2 },
@@ -528,29 +333,11 @@ catch (error)
 {
 	print(error instanceof BinaryParser.StreamContentError); // -> true
 }
-```
 
-Expected result:
 
-```javascript
-{
-  Count: 5,
-  Values: [
-    0,
-    1,
-    2,
-    3,
-    4
-  ]
-}
-```
-```javascript
-true
-```
 
-### Excercising custom iterators
+// custom iterators
 
-```javascript
 const fieldIterator = function(record, reader, fields)
 {
 	while (reader.leftBytes > 0)
@@ -588,18 +375,5 @@ let customIterator_RAW = Buffer.from('0213031407150610', 'hex');
 
 let customIterator = BinaryParser.parse(CustomIterator_Schema, customIterator_RAW, true);
 print(customIterator);
-```
-
-Expected result:
-
-```javascript
-{
-  Entries: {
-    Y: 19,
-    Z: 20,
-    C: 16
-  }
-}
-```
 
 
