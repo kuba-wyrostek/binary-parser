@@ -1,6 +1,10 @@
 # binary-parser
 Parse binary data according to provided declarative schema
 
+## Warning
+
+This repository is a work in progress. Do not use.
+
 ## How to use (by examples)
 
 It is assumed that `BinaryParser` class was imported into the scope:
